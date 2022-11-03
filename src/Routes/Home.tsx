@@ -8,6 +8,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 const Wrapper = styled.div`
   background-color: black;
   overflow-x: hidden;
+
+  height: 200vh;
 `;
 const Loader = styled.div`
   height: 20vh;
@@ -16,14 +18,14 @@ const Loader = styled.div`
   justify-content: center;
   align-items: center;
 `;
-const Banner = styled.div<{ bgPhoto: string }>`
+const Banner = styled.div<{ bgphoto: string }>`
   height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding: 60px;
   background-image: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 1)),
-    url(${(props) => props.bgPhoto});
+    url(${(props) => props.bgphoto});
   background-size: cover;
 `;
 const Title = styled.h2`
@@ -48,18 +50,68 @@ const Row = styled(motion.div)`
 
   position: absolute;
 `;
-const Box = styled(motion.div)`
+const Box = styled(motion.div)<{ bgphoto: string }>`
   background-color: white;
   height: 100px;
-  color: red;
+  background-image: url(${(props) => props.bgphoto});
+  background-size: cover;
+  background-position: center center;
+
+  &:first-child {
+    transform-origin: center left;
+  }
+  &:last-child {
+    transform-origin: center right;
+  }
 `;
+
+const Info = styled(motion.div)`
+  padding: 10px;
+  background-color: ${(props) => props.theme.black.lighter};
+  opacity: 0;
+
+  position: absolute;
+  //  height: 100%;
+  width: 100%;
+  bottom: 0;
+  h4 {
+    text-align: center;
+    font-size: 18px;
+  }
+`;
+const infoVariants = {
+  hover: {
+    opacity: 1,
+    transition: {
+      delay: 0.3,
+      type: 'tween',
+    },
+  },
+};
 
 const rowVariants = {
   hidden: {
-    x: window.outerWidth - 460,
+    x: window.outerWidth - 100,
   },
   visible: { x: 0 },
-  exit: { x: -window.outerWidth + 460 },
+  exit: { x: -window.outerWidth + 100 },
+};
+
+// 슬라이드 박스 개수
+const offset = 6;
+
+const boxVariants = {
+  normal: {
+    scale: 1,
+  },
+  hover: {
+    scale: 1.5,
+    y: -30,
+    transition: {
+      delay: 0.3,
+      type: 'tween',
+    },
+  },
 };
 
 function Home() {
@@ -68,7 +120,19 @@ function Home() {
     getMovies
   );
   const [index, setIndex] = useState(0);
-  const increaseIndex = () => setIndex((prev) => prev + 1);
+  const [leaving, setLeaving] = useState(false);
+  const toggleLeaving = () => setLeaving((prev) => !prev);
+  const increaseIndex = () => {
+    if (data) {
+      if (leaving) return;
+      toggleLeaving();
+      const totalMovies = data?.results.length - 1; // 메인에서 쓴 1개영화는 빼기
+      //      const maxIndex = Math.ceil(totalMovies / offset) - 1;
+      const maxIndex = Math.floor(totalMovies / offset) - 1;
+      setIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
+    }
+  };
+
   return (
     <Wrapper>
       {isLoading ? (
@@ -77,24 +141,43 @@ function Home() {
         <>
           <Banner
             onClick={increaseIndex}
-            bgPhoto={makeImagePath(data?.results[0].backdrop_path || '')}
+            bgphoto={makeImagePath(data?.results[0].backdrop_path || '')}
           >
             <Title>{data?.results[0].title}</Title>
             <Overview>{data?.results[0].overview}</Overview>
           </Banner>
           <Slider>
-            <AnimatePresence>
+            <AnimatePresence initial={false} onExitComplete={toggleLeaving}>
               <Row
                 key={index}
                 variants={rowVariants}
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                transition={{ type: 'tween', duration: 2 }}
+                transition={{ type: 'tween', duration: 1.2 }}
               >
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <Box key={i}>{i}</Box>
-                ))}
+                {data?.results
+                  .slice(1)
+                  .slice(offset * index, offset * index + offset)
+                  .map((movie) => (
+                    <Box
+                      key={movie.id}
+                      className="Box"
+                      variants={boxVariants}
+                      whileHover="hover"
+                      initial="normal"
+                      transition={{ type: 'tween' }}
+                      bgphoto={makeImagePath(movie.backdrop_path, 'w200')}
+                    >
+                      <Info
+                        className="Info"
+                        variants={infoVariants}
+                        whileHover="hover"
+                      >
+                        <h4>{movie.title}</h4>
+                      </Info>
+                    </Box>
+                  ))}
               </Row>
             </AnimatePresence>
           </Slider>

@@ -97,6 +97,9 @@ const SearchInput = styled(motion.input)`
   font-size: 16px;
   background-color: transparent;
   border: 1px solid ${(props) => props.theme.white.lighter};
+  &::placeholder {
+    color: white;
+  }
 `;
 
 const navVariants = {
