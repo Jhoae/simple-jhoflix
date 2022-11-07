@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { getMovies, IGetMoviesResult } from '../api';
 import { makeImagePath } from '../utils';
 import { AnimatePresence, motion } from 'framer-motion';
+import { PathMatch, useMatch, useNavigate } from 'react-router-dom';
 
 const Wrapper = styled.div`
   background-color: black;
@@ -54,8 +55,9 @@ const Box = styled(motion.div)<{ bgphoto: string }>`
   background-color: white;
   height: 100px;
   background-image: url(${(props) => props.bgphoto});
-  background-size: cover;
+  background-size: 16vw 100px;
   background-position: center center;
+  cursor: pointer;
 
   &:first-child {
     transform-origin: center left;
@@ -65,18 +67,42 @@ const Box = styled(motion.div)<{ bgphoto: string }>`
   }
 `;
 
-const Info = styled(motion.div)`
-  padding: 10px;
-  background-color: ${(props) => props.theme.black.lighter};
+const Info = styled(motion.div)<{ posterpath: string }>`
   opacity: 0;
 
   position: absolute;
-  //  height: 100%;
   width: 100%;
+
   bottom: 0;
-  h4 {
-    text-align: center;
-    font-size: 18px;
+  div {
+    height: 100px;
+    background-image: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 1)),
+      url(${(props) => props.posterpath});
+    background-size: 16vw 105px;
+    background-repeat: no-repeat;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-start;
+    > h4 {
+      font-size: 14px;
+      padding: 5px;
+
+      width: 14vw;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    > p {
+      font-size: 5px;
+      width: 14vw;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+      padding-left: 5px;
+      padding-bottom: 5px;
+    }
   }
 `;
 const infoVariants = {
@@ -121,7 +147,6 @@ function Home() {
   );
   const [index, setIndex] = useState(0);
   const [leaving, setLeaving] = useState(false);
-  const toggleLeaving = () => setLeaving((prev) => !prev);
   const increaseIndex = () => {
     if (data) {
       if (leaving) return;
@@ -131,6 +156,15 @@ function Home() {
       const maxIndex = Math.floor(totalMovies / offset) - 1;
       setIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
     }
+  };
+  const toggleLeaving = () => setLeaving((prev) => !prev);
+
+  const navigate = useNavigate();
+  const bigMovieMatch: PathMatch<string> | null = useMatch('/movies/:movieId');
+
+  const onBoxClicked = (movieId: number) => {
+    console.log('bigMovieMatch', bigMovieMatch);
+    navigate(`/movies/${movieId}`);
   };
 
   return (
@@ -161,6 +195,8 @@ function Home() {
                   .slice(offset * index, offset * index + offset)
                   .map((movie) => (
                     <Box
+                      layoutId={movie.id + ''}
+                      onClick={() => onBoxClicked(movie.id)}
                       key={movie.id}
                       className="Box"
                       variants={boxVariants}
@@ -173,14 +209,37 @@ function Home() {
                         className="Info"
                         variants={infoVariants}
                         whileHover="hover"
+                        posterpath={makeImagePath(movie.poster_path, 'w200')}
                       >
-                        <h4>{movie.title}</h4>
+                        <div>
+                          <h4>{movie.title}</h4>
+                          <p>{movie.overview}</p>
+                        </div>
                       </Info>
                     </Box>
                   ))}
               </Row>
             </AnimatePresence>
           </Slider>
+          <AnimatePresence>
+            {bigMovieMatch && (
+              <motion.div
+                layoutId={bigMovieMatch.params.movieId + ''}
+                style={{
+                  position: 'absolute',
+                  width: '40vw',
+                  height: '80vh',
+                  backgroundColor: 'red',
+                  top: 50,
+                  left: 0,
+                  right: 0,
+                  margin: '0 auto',
+                }}
+              >
+                {bigMovieMatch.params.movieId}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </>
       )}
     </Wrapper>
