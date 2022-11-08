@@ -1,3 +1,6 @@
+import axios from 'axios';
+import { useState } from 'react';
+
 export const API_KEY = 'f93a8038f4289084095b1cc4b38153f6';
 const BASE_PATH = 'https://api.themoviedb.org/3/';
 
@@ -24,4 +27,19 @@ export function getMovies() {
   return fetch(`${BASE_PATH}/movie/now_playing?api_key=${API_KEY}`).then(
     (response) => response.json()
   );
+}
+
+export function makeBigMovieModalPath(id: any, setBigMovieData: any) {
+  return fetch(`${BASE_PATH}/movie/${id}?api_key=${API_KEY}`).then((response) =>
+    response.json()
+  );
+  /*
+  axios
+    .get(`${BASE_PATH}movie/${id}?api_key=${API_KEY}&language=kr`)
+    .then((res) => {
+      let data = res.data;
+      setBigMovieData(data);
+    })
+    .catch((err) => console.log(err));
+    */
 }

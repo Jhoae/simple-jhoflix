@@ -7,6 +7,8 @@ import { AnimatePresence, motion, useScroll } from 'framer-motion';
 import { PathMatch, useMatch, useNavigate } from 'react-router-dom';
 import useWindowDimensions from '../useWidowDimensions';
 
+import BigMovieModal from '../Components/bigmovie';
+
 const Wrapper = styled.div`
   background-color: black;
   overflow-x: hidden;
@@ -186,7 +188,6 @@ function Home() {
   const bigMovieMatch: PathMatch<string> | null = useMatch('/movies/:movieId');
 
   const onBoxClicked = (movieId: number) => {
-    console.log('bigMovieMatch', bigMovieMatch);
     navigate(`/movies/${movieId}`);
   };
 
@@ -198,6 +199,13 @@ function Home() {
 
   // 슬라이더 넓이 겹침 에러 수정
   const width = useWindowDimensions();
+
+  // 클릭한 영화 데이터
+  const clickedMovie =
+    bigMovieMatch?.params.movieId &&
+    data?.results.find(
+      (movie) => String(movie.id) === bigMovieMatch.params.movieId
+    );
 
   return (
     <Wrapper>
@@ -257,25 +265,12 @@ function Home() {
             {bigMovieMatch && (
               <>
                 <Overlay
+                  className="Overlay"
                   onClick={onOverlayClick}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                 />
-                <motion.div
-                  layoutId={bigMovieMatch.params.movieId + ''}
-                  style={{
-                    position: 'absolute',
-                    width: '40vw',
-                    height: '80vh',
-                    backgroundColor: 'red',
-                    top: scrollY,
-                    left: 0,
-                    right: 0,
-                    margin: '0 auto',
-                  }}
-                >
-                  {bigMovieMatch.params.movieId}
-                </motion.div>
+                <BigMovieModal clickedMovie={clickedMovie} />
               </>
             )}
           </AnimatePresence>
