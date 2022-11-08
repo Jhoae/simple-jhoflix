@@ -3,8 +3,9 @@ import { useQuery } from 'react-query';
 import styled from 'styled-components';
 import { getMovies, IGetMoviesResult } from '../api';
 import { makeImagePath } from '../utils';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useScroll } from 'framer-motion';
 import { PathMatch, useMatch, useNavigate } from 'react-router-dom';
+import useWindowDimensions from '../useWidowDimensions';
 
 const Wrapper = styled.div`
   background-color: black;
@@ -37,6 +38,17 @@ const Title = styled.h2`
 const Overview = styled.p`
   font-size: 30px;
   width: 50%;
+  height: 180px;
+
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  &:hover {
+    overflow: visible;
+    -webkit-line-clamp: initial;
+  }
 `;
 
 const Slider = styled.div`
@@ -115,13 +127,24 @@ const infoVariants = {
   },
 };
 
-const rowVariants = {
+const Overlay = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+`;
+
+/*
+ const rowVariants = {
   hidden: {
-    x: window.outerWidth - 100,
+    x: window.innerWidth - 50,
   },
   visible: { x: 0 },
-  exit: { x: -window.outerWidth + 100 },
+  exit: { x: -window.innerWidth + 50 },
 };
+ */
 
 // 슬라이드 박스 개수
 const offset = 6;
@@ -167,6 +190,15 @@ function Home() {
     navigate(`/movies/${movieId}`);
   };
 
+  const onOverlayClick = () => {
+    navigate('/');
+  };
+
+  const { scrollY } = useScroll();
+
+  // 슬라이더 넓이 겹침 에러 수정
+  const width = useWindowDimensions();
+
   return (
     <Wrapper>
       {isLoading ? (
@@ -184,10 +216,10 @@ function Home() {
             <AnimatePresence initial={false} onExitComplete={toggleLeaving}>
               <Row
                 key={index}
-                variants={rowVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
+                //                variants={rowVariants}
+                initial={{ x: width + 10 }}
+                animate={{ x: 0 }}
+                exit={{ x: -width - 10 }}
                 transition={{ type: 'tween', duration: 1.2 }}
               >
                 {data?.results
@@ -223,21 +255,28 @@ function Home() {
           </Slider>
           <AnimatePresence>
             {bigMovieMatch && (
-              <motion.div
-                layoutId={bigMovieMatch.params.movieId + ''}
-                style={{
-                  position: 'absolute',
-                  width: '40vw',
-                  height: '80vh',
-                  backgroundColor: 'red',
-                  top: 50,
-                  left: 0,
-                  right: 0,
-                  margin: '0 auto',
-                }}
-              >
-                {bigMovieMatch.params.movieId}
-              </motion.div>
+              <>
+                <Overlay
+                  onClick={onOverlayClick}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                />
+                <motion.div
+                  layoutId={bigMovieMatch.params.movieId + ''}
+                  style={{
+                    position: 'absolute',
+                    width: '40vw',
+                    height: '80vh',
+                    backgroundColor: 'red',
+                    top: scrollY,
+                    left: 0,
+                    right: 0,
+                    margin: '0 auto',
+                  }}
+                >
+                  {bigMovieMatch.params.movieId}
+                </motion.div>
+              </>
             )}
           </AnimatePresence>
         </>
