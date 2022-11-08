@@ -33,13 +33,4 @@ export function makeBigMovieModalPath(id: any, setBigMovieData: any) {
   return fetch(`${BASE_PATH}/movie/${id}?api_key=${API_KEY}`).then((response) =>
     response.json()
   );
-  /*
-  axios
-    .get(`${BASE_PATH}movie/${id}?api_key=${API_KEY}&language=kr`)
-    .then((res) => {
-      let data = res.data;
-      setBigMovieData(data);
-    })
-    .catch((err) => console.log(err));
-    */
 }
